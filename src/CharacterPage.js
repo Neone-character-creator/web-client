@@ -1,12 +1,13 @@
 import React from "react";
-import {Container, Modal} from "react-bootstrap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons";
+import {Container} from "react-bootstrap";
+import LoginModal from "./LoginModal";
 
 export default class CharacterPage extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {};
+        this.state = {
+            loggedIn: localStorage.getItem("googleUser") != null
+        };
         this.beginLoginFlow = () => {
             this.setState({
                 loginInProgress: true
@@ -15,31 +16,26 @@ export default class CharacterPage extends React.Component {
 
         this.endLoginFlow = () => {
             this.setState({
+                loggedIn: localStorage.getItem("googleUser") !== undefined,
                 loginInProgress: false
             });
         };
 
         this.beginLoginFlow = this.beginLoginFlow.bind(this);
-
-
+        this.endLoginFlow = this.endLoginFlow.bind(this);
+        this.logout = () => {
+            localStorage.removeItem("googleUser");
+            this.setState({
+                loggedIn: false
+            });
+        }
     }
 
     render() {
         let {version, author, system} = this.props.match.params;
         return (
             <Container id="character-page-container">
-                <Modal show={this.state.loginInProgress} onHide={this.endLoginFlow}>
-                    <Modal.Dialog >
-                        <Modal.Header closeButton>
-                            <Modal.Title>Select Auth Provider</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                            <a className="btn btn-block btn-social btn-google">
-                                <FontAwesomeIcon icon={faGoogle} />Sign in with Google
-                            </a>
-                        </Modal.Body>
-                    </Modal.Dialog>
-                </Modal>
+                <LoginModal show={this.state.loginInProgress} onLoginComplete={this.endLoginFlow}/>
                 <div id="loading-modal" className="modal fade" role="dialog">
                     <div className="modal-dialog">
                         <div className="modal-content">
@@ -88,18 +84,19 @@ export default class CharacterPage extends React.Component {
                         </ul>
                     </nav>
                 </div>
-                <div className="row text-center" id="signin-warning">
+                {!this.state.loggedIn && <div className="row text-center" id="signin-warning">
                     <div className="container">
-                        <button className="btn btn-link login-menu" type="button" id="login" onClick={this.beginLoginFlow}>
+                        <button className="btn btn-link login-menu" type="button" id="login"
+                                onClick={this.beginLoginFlow}>
                             You're not logged in. Login here to save, load and delete characters.
                         </button>
                     </div>
-                </div>
-                <div className="row text-center" id="signout">
-                    <button className="btn btn-link logout" type="button" id="logout">
+                </div>}
+                {this.state.loggedIn && <div className="row text-center" id="signout">
+                    <button className="btn btn-link logout" type="button" id="logout" onClick={this.logout}>
                         Click here to logout.
                     </button>
-                </div>
+                </div>}
                 <div className="embed-responsive">
                     <iframe src={`/games/${author}/${system}/${version}`} id="content"
                             className="embed-responsive-item">
