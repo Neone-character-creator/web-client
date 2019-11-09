@@ -37,14 +37,27 @@ export default class CharacterPage extends React.Component {
                 window.gapi.load("auth2", async () => {
                     const googleUser = await global.gapi.auth2.getAuthInstance().currentUser.get();
                     const character = event.data.character;
+                    const isExistingCharacter = character.id !== undefined;
                     const endpointUrl = !character.id ? process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters` :
                         process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/${character.id}`;
-                    axios.post(endpointUrl, event.data.character, {
+                    axios({
+                        method: isExistingCharacter ? 'PUT' : 'POST',
+                        url: endpointUrl,
+                        data: event.data.character,
                         withCredentials: true,
                         headers: {
                             Authorization: `Bearer ${googleUser.Zi.id_token}`,
                             'Content-Type': 'application/json'
                         }
+                    }).then(response => {
+                        const postSaveCharacterData = response.data;
+                        this.contentIframe.contentWindow.postMessage({
+                            action: 'set-character',
+                            character: JSON.stringify(postSaveCharacterData)
+                        }, process.env.REACT_APP_PLUGIN_API_URL);
+                        alert("Character saved")
+                    }, error => {
+                        alert("There was an error saving the character");
                     });
                 });
             }
