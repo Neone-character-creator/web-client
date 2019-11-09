@@ -7,8 +7,15 @@ export default class CharacterPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            loggedIn: localStorage.getItem("googleUser") != null
+            loggedIn: false
         };
+        window.gapi.load("auth2", async () => {
+            global.gapi.auth2.getAuthInstance().currentUser.listen(user => {
+                this.setState({
+                    user: user.Zi ? user : null
+                });
+            });
+        });
         this.beginLoginFlow = () => {
             this.setState({
                 loginInProgress: true
@@ -17,7 +24,6 @@ export default class CharacterPage extends React.Component {
 
         this.endLoginFlow = () => {
             this.setState({
-                loggedIn: localStorage.getItem("googleUser") !== undefined,
                 loginInProgress: false
             });
         };
@@ -25,17 +31,17 @@ export default class CharacterPage extends React.Component {
         this.beginLoginFlow = this.beginLoginFlow.bind(this);
         this.endLoginFlow = this.endLoginFlow.bind(this);
         this.logout = () => {
-            localStorage.removeItem("googleUser");
-            this.setState({
-                loggedIn: false
+            global.gapi.auth2.getAuthInstance().disconnect().then(() => {
+                this.setState({
+                    user: null
+                });
             });
         };
         this.logout = this.logout.bind(this);
         window.addEventListener("message", event => {
-            if (event.data.action === "get-character") {
+            if (event.data.action === "get-character" && this.state.user) {
                 const {version, author, system} = this.props.match.params;
                 window.gapi.load("auth2", async () => {
-                    const googleUser = await global.gapi.auth2.getAuthInstance().currentUser.get();
                     const character = event.data.character;
                     const isExistingCharacter = character.id !== undefined;
                     const endpointUrl = !character.id ? process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters` :
@@ -46,7 +52,7 @@ export default class CharacterPage extends React.Component {
                         data: event.data.character,
                         withCredentials: true,
                         headers: {
-                            Authorization: `Bearer ${googleUser.Zi.id_token}`,
+                            Authorization: `Bearer ${this.state.user.Zi.id_token}`,
                             'Content-Type': 'application/json'
                         }
                     }).then(response => {
@@ -70,6 +76,13 @@ export default class CharacterPage extends React.Component {
             }, process.env.REACT_APP_PLUGIN_API_URL);
         };
         this.initiateSave = this.initiateSave.bind(this);
+
+        this.initiateNew = () => {
+            var proceed = window.confirm("This will lose any current unsaved data.");
+            if (proceed) {
+                window.location.reload();
+            }
+        }
     }
 
     render() {
@@ -93,31 +106,36 @@ export default class CharacterPage extends React.Component {
                     <nav id="navbar" className="navbar navbar-expand-md bg-light">
                         <ul className="navbar-nav">
                             <li className="nav-item">
-                                <a className="nav-link" href="#" id="new-character">
+                                <a className="nav-link" href="#" onClick={this.initiateNew} id="new-character">
                                     <span className="glyphicon glyphicon-file"/>
                                     New Character
                                 </a>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href="#" id="save-character" onClick={this.initiateSave}>
+                                <a className="nav-link" href={this.state.user ? "#" : undefined} id="save-character"
+                                   onClick={this.initiateSave}
+                                   disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-floppy-save"/>
                                     Save Character
                                 </a>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href="#" id="open-character">
+                                <a className="nav-link" href={this.state.user ? "#" : undefined} id="open-character"
+                                   disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-floppy-open"/>
                                     Open Character
                                 </a>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href="#" id="delete-character">
+                                <a className="nav-link" href={this.state.user ? "#" : undefined} id="delete-character"
+                                   disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-floppy-remove"/>
                                     Delete Character
                                 </a>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href="#" id="export-character">
+                                <a className="nav-link" href={this.state.user ? "#" : undefined} id="export-character"
+                                   disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-download-alt"/>
                                     Export to PDF
                                 </a>
@@ -125,7 +143,7 @@ export default class CharacterPage extends React.Component {
                         </ul>
                     </nav>
                 </div>
-                {!this.state.loggedIn && <div className="row text-center" id="signin-warning">
+                {!this.state.user && <div className="row text-center" id="signin-warning">
                     <div className="container">
                         <button className="btn btn-link login-menu" type="button" id="login"
                                 onClick={this.beginLoginFlow}>
@@ -133,10 +151,12 @@ export default class CharacterPage extends React.Component {
                         </button>
                     </div>
                 </div>}
-                {this.state.loggedIn && <div className="row text-center" id="signout">
-                    <button className="btn btn-link logout" type="button" id="logout" onClick={this.logout}>
-                        Click here to logout.
-                    </button>
+                {this.state.user && <div className="row text-center" id="signout">
+                    <div className="container">
+                        <button className="btn btn-link logout" type="button" id="logout" onClick={this.logout}>
+                            Click here to logout.
+                        </button>
+                    </div>
                 </div>}
                 <div className="embed-responsive embed-responsive-4by3 bordered">
                     <iframe
