@@ -1,6 +1,7 @@
 import React from "react";
 import {Container} from "react-bootstrap";
 import LoginModal from "./LoginModal";
+import axios from "axios";
 
 export default class CharacterPage extends React.Component {
     constructor(props) {
@@ -30,14 +31,36 @@ export default class CharacterPage extends React.Component {
             });
         };
         this.logout = this.logout.bind(this);
+        window.addEventListener("message", event => {
+            if (event.data.action === "get-character") {
+                const {version, author, system} = this.props.match.params;
+                window.gapi.load("auth2", async () => {
+                    const googleUser = await global.gapi.auth2.getAuthInstance().currentUser.get();
+                    const character = event.data.character;
+                    const endpointUrl = !character.id ? process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters` :
+                        process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/${character.id}`;
+                    axios.post(endpointUrl, event.data.character, {
+                        withCredentials: true,
+                        headers: {
+                            Authorization: `Bearer ${googleUser.Zi.id_token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                });
+            }
+        });
         this.initiateSave = () => {
-            this.contentIframe.contentWindow.postMessage("get-character");
+            const correlationId = Math.random() * (Number.MAX_SAFE_INTEGER - Number.MIN_SAFE_INTEGER) + Number.MIN_SAFE_INTEGER;
+            this.contentIframe.contentWindow.postMessage({
+                action: "get-character",
+                correlationId
+            }, process.env.REACT_APP_PLUGIN_API_URL);
         };
         this.initiateSave = this.initiateSave.bind(this);
     }
 
     render() {
-        let {version, author, system} = this.props.match.params;
+        const {version, author, system} = this.props.match.params;
         return (
             <Container id="character-page-container">
                 <LoginModal show={this.state.loginInProgress} onLoginComplete={this.endLoginFlow}/>
@@ -103,8 +126,12 @@ export default class CharacterPage extends React.Component {
                     </button>
                 </div>}
                 <div className="embed-responsive embed-responsive-4by3 bordered">
-                    <iframe src={process.env.REACT_APP_PLUGIN_API_URL + `/pluginresource/${author}/${system}/${version}`} id="content"
-                            className="embed-responsive-item" ref={element => {this.contentIframe = element}}>
+                    <iframe
+                        src={process.env.REACT_APP_PLUGIN_API_URL + `/pluginresource/${author}/${system}/${version}`}
+                        id="content"
+                        className="embed-responsive-item" ref={element => {
+                        this.contentIframe = element
+                    }}>
                     </iframe>
                 </div>
             </Container>
