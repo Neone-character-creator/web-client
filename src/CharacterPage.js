@@ -28,7 +28,12 @@ export default class CharacterPage extends React.Component {
             this.setState({
                 loggedIn: false
             });
-        }
+        };
+        this.logout = this.logout.bind(this);
+        this.initiateSave = () => {
+            this.contentIframe.contentWindow.postMessage("get-character");
+        };
+        this.initiateSave = this.initiateSave.bind(this);
     }
 
     render() {
@@ -58,7 +63,7 @@ export default class CharacterPage extends React.Component {
                                 </a>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href="#" id="save-character">
+                                <a className="nav-link" href="#" id="save-character" onClick={this.initiateSave}>
                                     <span className="glyphicon glyphicon-floppy-save"/>
                                     Save Character
                                 </a>
@@ -97,10 +102,9 @@ export default class CharacterPage extends React.Component {
                         Click here to logout.
                     </button>
                 </div>}
-                <div className="embed-responsive">
-                    <iframe src={`/games/${author}/${system}/${version}`} id="content"
-                            className="embed-responsive-item">
-
+                <div className="embed-responsive embed-responsive-4by3 bordered">
+                    <iframe src={process.env.REACT_APP_PLUGIN_API_URL + `/pluginresource/${author}/${system}/${version}`} id="content"
+                            className="embed-responsive-item" ref={element => {this.contentIframe = element}}>
                     </iframe>
                 </div>
             </Container>
