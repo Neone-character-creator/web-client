@@ -12,15 +12,21 @@ import HandleAuth from "./HandleAuth";
 export default class App extends React.Component {
     constructor(props) {
         super(props);
+        window.gapi.load("auth2", () => {
+            this.auth2 = window.gapi.auth2.init({
+                client_id: process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID,
+                cookiepolicy: "single_host_origin"
+            });
+        });
     }
 
     render() {
         return (
             <Router>
                 <Switch>
-                    <Route exact path="/" component={Plugins} />
-                    <Route path="/plugins/:author/:system/:version" component={CharacterPage} />
-                    <Route path="/handleAuth" component={HandleAuth} />
+                    <Route exact path="/" component={Plugins}/>
+                    <Route path="/plugins/:author/:system/:version" component={CharacterPage}/>
+                    <Route path="/handleAuth" component={HandleAuth}/>
                 </Switch>
             </Router>
         );
