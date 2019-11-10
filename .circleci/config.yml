@@ -48,11 +48,11 @@ jobs:
 
     steps:
       - attach_workspace:
-        at: ~/repo
+          at: ~/repo
 
       - aws-cli/install
 
-      - aws-cli/setup:
+      - aws-cli/setup
 
       - run: aws s3 copy ./build $S3_DEPLOY_URL
 
