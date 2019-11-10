@@ -2,17 +2,24 @@ import React from "react";
 import {Container} from "react-bootstrap";
 import LoginModal from "./LoginModal";
 import axios from "axios";
+import CharacterList from './CharacterList';
+import _ from "lodash";
 
 export default class CharacterPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            loggedIn: false
+            loggedIn: false,
+            loadedCharacters: []
         };
         window.gapi.load("auth2", async () => {
+            const user = global.gapi.auth2.getAuthInstance().currentUser.get();
+            this.setState({
+                user
+            });
             global.gapi.auth2.getAuthInstance().currentUser.listen(user => {
                 this.setState({
-                    user: user.Zi ? user : null
+                    user: user
                 });
             });
         });
@@ -82,26 +89,47 @@ export default class CharacterPage extends React.Component {
             if (proceed) {
                 window.location.reload();
             }
+        };
+
+        this.initiateLoad = () => {
+            const {version, author, system} = this.props.match.params;
+            this.setState({
+                    loadInProgress: true
+                }, () => {
+                    axios.get(process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters`, {
+                        headers: {
+                            authorization: `Bearer ${this.state.user.Zi.id_token}`
+                        }
+                    }).then(response => {
+                        this.setState({
+                            loadedCharacters: response.data
+                        })
+                    }, error => {
+                        alert("There was an error loading the characters from the server");
+                    })
+                }
+            );
         }
+        this.loadCharacter = async character => {
+            this.contentIframe.contentWindow.postMessage({
+                action: "set-character",
+                character: JSON.stringify(character)
+            }, process.env.REACT_APP_PLUGIN_API_URL);
+        };
+        this.endLoadFlow = async () => {
+            this.setState({
+                loadInProgress: false
+            });
+        };
     }
 
     render() {
         const {version, author, system} = this.props.match.params;
         return (
             <Container id="character-page-container">
-                <LoginModal show={this.state.loginInProgress} onLoginComplete={this.endLoginFlow}/>
-                <div id="loading-modal" className="modal fade" role="dialog">
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close" data-dismiss="modal">&times;</button>
-                            </div>
-                            <div id="modal-content" className="modal-body">
-                                Loading...
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <LoginModal show={this.state.loginInProgress} onEnd={this.endLoginFlow} onComplete={this.endLoginFlow}/>
+                <CharacterList show={this.state.loadInProgress} characters={this.state.loadedCharacters} onEnd={this.endLoadFlow}
+                               onSelect={this.loadCharacter} selectCharacter={this.loadCharacter}/>
                 <div className="container">
                     <nav id="navbar" className="navbar navbar-expand-md bg-light">
                         <ul className="navbar-nav">
@@ -121,20 +149,23 @@ export default class CharacterPage extends React.Component {
                             </li>
                             <li className="nav-item">
                                 <a className="nav-link" href={this.state.user ? "#" : undefined} id="open-character"
-                                   disabled={this.state.user === undefined}>
+                                   disabled={this.state.user === undefined}
+                                   onClick={this.initiateLoad}>
                                     <span className="glyphicon glyphicon-floppy-open"/>
                                     Open Character
                                 </a>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href={this.state.user ? "#" : undefined} id="delete-character"
+                                <a className="nav-link" href={this.state.user ? "#" : undefined}
+                                   id="delete-character"
                                    disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-floppy-remove"/>
                                     Delete Character
                                 </a>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href={this.state.user ? "#" : undefined} id="export-character"
+                                <a className="nav-link" href={this.state.user ? "#" : undefined}
+                                   id="export-character"
                                    disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-download-alt"/>
                                     Export to PDF
