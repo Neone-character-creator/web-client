@@ -1,7 +1,7 @@
 import React from 'react';
 import loadSpinner from "./ajax-loader.gif";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import {Link} from "react-router-dom";
 
 export default class Plugins extends React.Component {
     constructor(props) {
@@ -17,7 +17,8 @@ export default class Plugins extends React.Component {
             });
         }, err => {
             this.setState({
-                loading: false
+                loading: false,
+                statusMessage: "The was an error contacting the server."
             });
             console.error(err);
         });
@@ -46,8 +47,6 @@ export default class Plugins extends React.Component {
 
                                 Select a system below to get started:
                                 <div className="list-group" id="available-plugins">
-                                    {this.state.loading &&
-                                    <img id="spinner" src={loadSpinner} alt="Plugins are loading"/>}
                                 </div>
                             </div>
                         </div>
@@ -61,13 +60,17 @@ export default class Plugins extends React.Component {
                                     </li>)
                                 })}
                             </ul>
-                            {!this.state.loading && this.state.plugins.length === 0 && "No plugins found"}
+                            {!this.state.loading && this.state.plugins.length === 0 && this.state.statusMessage}
                         </div>
                     </div>
                     <div className="col-md-6 scrollable" id="plugin-description"
                          style={{height: 100, minHeight: 100}}
                          dangerouslySetInnerHTML={{__html: this.state.description}}>
                     </div>
+                </div>
+                <div className="row">
+                    {this.state.loading &&
+                        <img id="spinner" class="mx-auto" src={loadSpinner} alt="Plugins are loading"/>}
                 </div>
             </div>
         );
