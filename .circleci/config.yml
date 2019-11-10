@@ -63,9 +63,9 @@ workflows:
       - build:
           context: NEOne-Web-Production
           filters:
-            - branches:
-                only:
-                  - master
+            branches:
+              only:
+                - master
       - S3_upload:
           context: NEOne-Web-Production
           requires:
