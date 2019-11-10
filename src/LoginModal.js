@@ -15,7 +15,6 @@ export default class LoginModal extends React.Component {
 
     initializeGoogle(element) {
         window.gapi.auth2.getAuthInstance().attachClickHandler(element, {}, (googleUser) => {
-            localStorage.setItem("googleUser", googleUser.getId());
             this.props.onLoginComplete();
         }, error => {
             console.error(error);
