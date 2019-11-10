@@ -58,7 +58,7 @@ jobs:
 
 workflows:
   version: 2
-  production_deploy:
+  build_and_deploy:
     jobs:
       - build:
           context: NEOne-Web-Production
