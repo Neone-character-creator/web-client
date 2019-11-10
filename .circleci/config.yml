@@ -6,7 +6,7 @@ version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@0.1.16
 jobs:
-  production_build:
+  build:
     docker:
       # specify the version you desire here
       - image: circleci/node:10
@@ -61,6 +61,6 @@ workflow:
   production_deploy:
     jobs:
       - build:
-          context: Production
+          context: NEOne-Web-Production
       - upload:
-          context: Production
+          context: NEOne-Web-Production
