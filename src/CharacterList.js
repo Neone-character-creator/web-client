@@ -29,9 +29,9 @@ export default class CharacterList extends React.Component {
                                         this.props.selectCharacter(wrapper.character).then(this.props.onEnd);
                                     };
                                     return (<li>
-                                        <a href="#" onClick={loadThis}>
+                                        <button class="btn btn-link" href="#" onClick={loadThis}>
                                             {wrapper.character.name || `Unnamed Character ${wrapper.id}` }
-                                        </a>
+                                        </button>
                                     </li>);
                                 })
                             }

@@ -3,7 +3,6 @@ import {Container} from "react-bootstrap";
 import LoginModal from "./LoginModal";
 import axios from "axios";
 import CharacterList from './CharacterList';
-import _ from "lodash";
 
 export default class CharacterPage extends React.Component {
     constructor(props) {
@@ -134,42 +133,42 @@ export default class CharacterPage extends React.Component {
                     <nav id="navbar" className="navbar navbar-expand-md bg-light">
                         <ul className="navbar-nav">
                             <li className="nav-item">
-                                <a className="nav-link" href="#" onClick={this.initiateNew} id="new-character">
+                                <button className="btn btn-link" href="#" onClick={this.initiateNew} id="new-character">
                                     <span className="glyphicon glyphicon-file"/>
                                     New Character
-                                </a>
+                                </button>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href={this.state.user ? "#" : undefined} id="save-character"
+                                <button className="btn btn-link" href={this.state.user ? "#" : undefined} id="save-character"
                                    onClick={this.initiateSave}
                                    disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-floppy-save"/>
                                     Save Character
-                                </a>
+                                </button>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href={this.state.user ? "#" : undefined} id="open-character"
+                                <button className="btn btn-link" href={this.state.user ? "#" : undefined} id="open-character"
                                    disabled={this.state.user === undefined}
                                    onClick={this.initiateLoad}>
                                     <span className="glyphicon glyphicon-floppy-open"/>
                                     Open Character
-                                </a>
+                                </button>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href={this.state.user ? "#" : undefined}
+                                <button className="btn btn-link" href={this.state.user ? "#" : undefined}
                                    id="delete-character"
                                    disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-floppy-remove"/>
                                     Delete Character
-                                </a>
+                                </button>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" href={this.state.user ? "#" : undefined}
+                                <button className="btn btn-link" href={this.state.user ? "#" : undefined}
                                    id="export-character"
                                    disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-download-alt"/>
                                     Export to PDF
-                                </a>
+                                </button>
                             </li>
                         </ul>
                     </nav>
@@ -191,6 +190,7 @@ export default class CharacterPage extends React.Component {
                 </div>}
                 <div className="embed-responsive embed-responsive-4by3 bordered">
                     <iframe
+                        title="Plugin content"
                         src={process.env.REACT_APP_PLUGIN_API_URL + `/pluginresource/${author}/${system}/${version}`}
                         id="content"
                         className="embed-responsive-item" ref={element => {

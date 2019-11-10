@@ -2,8 +2,6 @@ import React from "react";
 import {Modal} from "react-bootstrap";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faGoogle} from "@fortawesome/free-brands-svg-icons";
-import axios from "axios";
-
 
 export default class LoginModal extends React.Component {
     constructor(props) {
@@ -15,7 +13,7 @@ export default class LoginModal extends React.Component {
 
     initializeGoogle(element) {
         window.gapi.auth2.getAuthInstance().attachClickHandler(element, {}, (googleUser) => {
-            this.props.onLoginComplete();
+            this.props.onComplete();
         }, error => {
             console.error(error);
         });
@@ -26,7 +24,7 @@ export default class LoginModal extends React.Component {
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.endLoginFlow}>
+            <Modal show={this.props.show} onHide={this.props.onEnd}>
                 <Modal.Dialog>
                     <Modal.Header closeButton>
                         <Modal.Title>Select Auth Provider</Modal.Title>
