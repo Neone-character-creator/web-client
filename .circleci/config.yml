@@ -47,14 +47,14 @@ jobs:
     working_directory: ~/repo
 
     steps:
-      attach_workspace:
+      - attach_workspace:
         at: ~/repo
 
-      aws-cli/install
+      - aws-cli/install
 
-      aws-cli/setup:
+      - aws-cli/setup:
 
-      run: aws s3 copy ./build $S3_DEPLOY_URL
+      - run: aws s3 copy ./build $S3_DEPLOY_URL
 
 workflow:
   version: 2
