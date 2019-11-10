@@ -56,10 +56,16 @@ jobs:
 
       - run: aws s3 copy ./build $S3_DEPLOY_URL
 
-workflow:
+workflows:
   version: 2
   production_deploy:
     jobs:
+      - build:
+          context: NEOne-Web-Production
+          filters:
+            - branches:
+                only:
+                  - master
       - S3_upload:
           context: NEOne-Web-Production
           requires:
