@@ -62,5 +62,7 @@ workflow:
     jobs:
       - build:
           context: NEOne-Web-Production
-      - upload:
+      - S3_upload:
           context: NEOne-Web-Production
+          requires:
+            - build
