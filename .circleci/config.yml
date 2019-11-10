@@ -54,7 +54,7 @@ jobs:
 
       - aws-cli/setup
 
-      - run: aws s3 cp ./build $S3_DEPLOY_URL
+      - run: aws s3 cp ./build $S3_DEPLOY_URL --recursive
 
 workflows:
   version: 2
