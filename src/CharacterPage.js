@@ -11,17 +11,7 @@ export default class CharacterPage extends React.Component {
             loggedIn: false,
             loadedCharacters: []
         };
-        window.gapi.load("auth2", async () => {
-            const user = global.gapi.auth2.getAuthInstance().currentUser.get();
-            this.setState({
-                user
-            });
-            global.gapi.auth2.getAuthInstance().currentUser.listen(user => {
-                this.setState({
-                    user: user
-                });
-            });
-        });
+
         this.beginLoginFlow = () => {
             this.setState({
                 loginInProgress: true
@@ -122,6 +112,20 @@ export default class CharacterPage extends React.Component {
         };
     }
 
+    componentDidMount() {
+        window.gapi.load("auth2", async () => {
+            const user = global.gapi.auth2.getAuthInstance().currentUser.get();
+            this.setState({
+                user
+            });
+            global.gapi.auth2.getAuthInstance().currentUser.listen(user => {
+                this.setState({
+                    user: user
+                });
+            });
+        });
+    }
+
     render() {
         const {version, author, system} = this.props.match.params;
         return (
@@ -188,7 +192,7 @@ export default class CharacterPage extends React.Component {
                         </button>
                     </div>
                 </div>}
-                <div className="embed-responsive embed-responsive-4by3 bordered">
+                <div className="embed-responsive embed-responsive-16by9 bordered">
                     <iframe
                         title="Plugin content"
                         src={process.env.REACT_APP_PLUGIN_API_URL + `/pluginresource/${author}/${system}/${version}`}
