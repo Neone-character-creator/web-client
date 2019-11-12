@@ -205,7 +205,7 @@ export default class CharacterPage extends React.Component {
                 </div>}
                 {this.state.contentLoading && <div className="row text-center">
                     <div className="container">
-                        <img src={spinner}></img>
+                        <img src={spinner} alt="Loading"></img>
                     </div>
                 </div>}
                 <div className="embed-responsive embed-responsive-16by9 bordered">
