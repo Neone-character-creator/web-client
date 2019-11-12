@@ -4,6 +4,7 @@ import LoginModal from "./LoginModal";
 import axios from "axios";
 import CharacterList from './CharacterList';
 import spinner from "./ajax-loader.gif";
+import ContactModal from "./ContactModal";
 
 export default class CharacterPage extends React.Component {
     constructor(props) {
@@ -118,6 +119,17 @@ export default class CharacterPage extends React.Component {
                 contentLoading: false
             })
         }
+
+        this.beginContactFlow = () => {
+            this.setState({
+                contactInProgress: true
+            })
+        }
+        this.endContactFlow = () => {
+            this.setState({
+                contactInProgress: false
+            })
+        }
     }
 
     componentDidMount() {
@@ -142,6 +154,7 @@ export default class CharacterPage extends React.Component {
                 <CharacterList show={this.state.loadInProgress} characters={this.state.loadedCharacters}
                                onEnd={this.endLoadFlow}
                                onSelect={this.loadCharacter} selectCharacter={this.loadCharacter}/>
+                <ContactModal show={this.state.contactInProgress} onEnd={this.endContactFlow} onComplete={this.endContactFlow}/>
                 <div className="container">
                     <nav id="navbar" className="navbar navbar-expand-md bg-light">
                         <ul className="navbar-nav">
@@ -183,6 +196,13 @@ export default class CharacterPage extends React.Component {
                                         disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-download-alt"/>
                                     Export to PDF
+                                </button>
+                            </li>
+                            <li className="nav-item">
+                                <button className="btn btn-link" href="#"
+                                        id="contact"
+                                        onClick={this.beginContactFlow}>
+                                    Contact Us
                                 </button>
                             </li>
                         </ul>
