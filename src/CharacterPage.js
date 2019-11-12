@@ -3,11 +3,13 @@ import {Container} from "react-bootstrap";
 import LoginModal from "./LoginModal";
 import axios from "axios";
 import CharacterList from './CharacterList';
+import spinner from "./ajax-loader.gif";
 
 export default class CharacterPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            contentLoading: true,
             loggedIn: false,
             loadedCharacters: []
         };
@@ -98,7 +100,7 @@ export default class CharacterPage extends React.Component {
                     })
                 }
             );
-        }
+        };
         this.loadCharacter = async character => {
             this.contentIframe.contentWindow.postMessage({
                 action: "set-character",
@@ -110,6 +112,12 @@ export default class CharacterPage extends React.Component {
                 loadInProgress: false
             });
         };
+
+        this.contentLoaded = () => {
+            this.setState({
+                contentLoading: false
+            })
+        }
     }
 
     componentDidMount() {
@@ -131,7 +139,8 @@ export default class CharacterPage extends React.Component {
         return (
             <Container id="character-page-container">
                 <LoginModal show={this.state.loginInProgress} onEnd={this.endLoginFlow} onComplete={this.endLoginFlow}/>
-                <CharacterList show={this.state.loadInProgress} characters={this.state.loadedCharacters} onEnd={this.endLoadFlow}
+                <CharacterList show={this.state.loadInProgress} characters={this.state.loadedCharacters}
+                               onEnd={this.endLoadFlow}
                                onSelect={this.loadCharacter} selectCharacter={this.loadCharacter}/>
                 <div className="container">
                     <nav id="navbar" className="navbar navbar-expand-md bg-light">
@@ -143,33 +152,35 @@ export default class CharacterPage extends React.Component {
                                 </button>
                             </li>
                             <li className="nav-item">
-                                <button className="btn btn-link" href={this.state.user ? "#" : undefined} id="save-character"
-                                   onClick={this.initiateSave}
-                                   disabled={this.state.user === undefined}>
+                                <button className="btn btn-link" href={this.state.user ? "#" : undefined}
+                                        id="save-character"
+                                        onClick={this.initiateSave}
+                                        disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-floppy-save"/>
                                     Save Character
                                 </button>
                             </li>
                             <li className="nav-item">
-                                <button className="btn btn-link" href={this.state.user ? "#" : undefined} id="open-character"
-                                   disabled={this.state.user === undefined}
-                                   onClick={this.initiateLoad}>
+                                <button className="btn btn-link" href={this.state.user ? "#" : undefined}
+                                        id="open-character"
+                                        disabled={this.state.user === undefined}
+                                        onClick={this.initiateLoad}>
                                     <span className="glyphicon glyphicon-floppy-open"/>
                                     Open Character
                                 </button>
                             </li>
                             <li className="nav-item">
                                 <button className="btn btn-link" href={this.state.user ? "#" : undefined}
-                                   id="delete-character"
-                                   disabled={this.state.user === undefined}>
+                                        id="delete-character"
+                                        disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-floppy-remove"/>
                                     Delete Character
                                 </button>
                             </li>
                             <li className="nav-item">
                                 <button className="btn btn-link" href={this.state.user ? "#" : undefined}
-                                   id="export-character"
-                                   disabled={this.state.user === undefined}>
+                                        id="export-character"
+                                        disabled={this.state.user === undefined}>
                                     <span className="glyphicon glyphicon-download-alt"/>
                                     Export to PDF
                                 </button>
@@ -192,11 +203,18 @@ export default class CharacterPage extends React.Component {
                         </button>
                     </div>
                 </div>}
+                {this.state.contentLoading && <div className="row text-center">
+                    <div className="container">
+                        <img src={spinner}></img>
+                    </div>
+                </div>}
                 <div className="embed-responsive embed-responsive-16by9 bordered">
+
                     <iframe
                         title="Plugin content"
                         src={process.env.REACT_APP_PLUGIN_API_URL + `/pluginresource/${author}/${system}/${version}`}
                         id="content"
+                        onLoad={this.contentLoaded}
                         className="embed-responsive-item" ref={element => {
                         this.contentIframe = element
                     }}>
