@@ -5,6 +5,7 @@ import axios from "axios";
 import CharacterList from './CharacterList';
 import spinner from "./ajax-loader.gif";
 import ContactModal from "./ContactModal";
+import DownloadModal from "./DownloadModal";
 
 export default class CharacterPage extends React.Component {
     constructor(props) {
@@ -36,39 +37,73 @@ export default class CharacterPage extends React.Component {
                 });
             });
         };
-        this.logout = this.logout.bind(this);
-        window.addEventListener("message", event => {
-            if (event.data.action === "get-character" && this.state.user) {
+        this.doSave = character => {
+            window.gapi.load("auth2", async () => {
                 const {version, author, system} = this.props.match.params;
-                window.gapi.load("auth2", async () => {
-                    const character = event.data.character;
-                    const isExistingCharacter = character.id !== undefined;
-                    const endpointUrl = !character.id ? process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters` :
-                        process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/${character.id}`;
-                    axios({
-                        method: isExistingCharacter ? 'PUT' : 'POST',
-                        url: endpointUrl,
-                        data: event.data.character,
-                        withCredentials: true,
-                        headers: {
-                            Authorization: `Bearer ${this.state.user.Zi.id_token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    }).then(response => {
-                        const postSaveCharacterData = response.data;
-                        this.contentIframe.contentWindow.postMessage({
-                            action: 'set-character',
-                            character: JSON.stringify(postSaveCharacterData)
-                        }, process.env.REACT_APP_PLUGIN_API_URL);
-                        alert("Character saved")
-                    }, error => {
-                        alert("There was an error saving the character");
-                    });
+                const isExistingCharacter = character.id !== undefined;
+                const endpointUrl = !character.id ? process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters` :
+                    process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/${character.id}`;
+                axios({
+                    method: isExistingCharacter ? 'PUT' : 'POST',
+                    url: endpointUrl,
+                    data: character,
+                    withCredentials: true,
+                    headers: {
+                        Authorization: `Bearer ${this.state.user.Zi.id_token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    const postSaveCharacterData = response.data;
+                    this.contentIframe.contentWindow.postMessage({
+                        action: 'set-character',
+                        character: JSON.stringify(postSaveCharacterData)
+                    }, process.env.REACT_APP_PLUGIN_API_URL);
+                    alert("Character saved")
+                }, error => {
+                    alert("There was an error saving the character");
                 });
+            });
+        };
+        this.doExport = character => {
+            window.gapi.load("auth2", async () => {
+                const {version, author, system} = this.props.match.params;
+                const endpointUrl = process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/pdf`;
+                axios({
+                    method: 'POST',
+                    url: endpointUrl,
+                    data: character,
+                    withCredentials: true,
+                    headers: {
+                        Authorization: `Bearer ${this.state.user.Zi.id_token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    this.setState({
+                        exportId: response.data,
+                        exportInProgress: true
+                    });
+                }, error => {
+                    alert("There was an error during the export");
+                    console.error(error);
+                });
+            });
+        };
+
+        this.logout = this.logout.bind(this);
+        this.actionCorrelations = {};
+        window.addEventListener("message", event => {
+            switch (this.actionCorrelations[event.data.correlationId]) {
+                case "save":
+                    this.doSave(event.data.character);
+                    break;
+                case "export":
+                    this.doExport(event.data.character);
+                    break;
             }
         });
         this.initiateSave = () => {
             const correlationId = Math.random() * (Number.MAX_SAFE_INTEGER - Number.MIN_SAFE_INTEGER) + Number.MIN_SAFE_INTEGER;
+            this.actionCorrelations[correlationId] = "save";
             this.contentIframe.contentWindow.postMessage({
                 action: "get-character",
                 correlationId
@@ -117,18 +152,33 @@ export default class CharacterPage extends React.Component {
         this.contentLoaded = () => {
             this.setState({
                 contentLoading: false
-            })
-        }
+            });
+        };
 
         this.beginContactFlow = () => {
             this.setState({
                 contactInProgress: true
-            })
-        }
+            });
+        };
         this.endContactFlow = () => {
             this.setState({
                 contactInProgress: false
-            })
+            });
+        };
+
+        this.exportToPdf = () => {
+            const correlationId = Math.random() * (Number.MAX_SAFE_INTEGER - Number.MIN_SAFE_INTEGER) + Number.MIN_SAFE_INTEGER;
+            this.actionCorrelations[correlationId] = "export";
+            this.contentIframe.contentWindow.postMessage({
+                action: "get-character",
+                correlationId
+            }, process.env.REACT_APP_PLUGIN_API_URL);
+        };
+
+        this.endExportFlow = () => {
+            this.setState({
+                exportInProgress: false
+            });
         }
     }
 
@@ -154,7 +204,10 @@ export default class CharacterPage extends React.Component {
                 <CharacterList show={this.state.loadInProgress} characters={this.state.loadedCharacters}
                                onEnd={this.endLoadFlow}
                                onSelect={this.loadCharacter} selectCharacter={this.loadCharacter}/>
-                <ContactModal show={this.state.contactInProgress} onEnd={this.endContactFlow} onComplete={this.endContactFlow}/>
+                <ContactModal show={this.state.contactInProgress} onEnd={this.endContactFlow}
+                              onComplete={this.endContactFlow}/>
+                <DownloadModal show={this.state.exportInProgress} onEnd={this.endExportFlow}
+                               onComplete={this.endExportFlow} exportUrl={process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/pdf/${this.state.exportId}`} />
                 <div className="container">
                     <nav id="navbar" className="navbar navbar-expand-md bg-light">
                         <ul className="navbar-nav">
@@ -193,7 +246,8 @@ export default class CharacterPage extends React.Component {
                             <li className="nav-item">
                                 <button className="btn btn-link" href={this.state.user ? "#" : undefined}
                                         id="export-character"
-                                        disabled={this.state.user === undefined}>
+                                        disabled={this.state.user === undefined}
+                                        onClick={this.exportToPdf}>
                                     <span className="glyphicon glyphicon-download-alt"/>
                                     Export to PDF
                                 </button>
