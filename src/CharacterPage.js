@@ -114,7 +114,9 @@ export default class CharacterPage extends React.Component {
         this.initiateNew = () => {
             var proceed = window.confirm("This will lose any current unsaved data.");
             if (proceed) {
-                window.location.reload();
+                this.contentIframe.contentWindow.postMessage({
+
+                });
             }
         };
 
@@ -186,11 +188,11 @@ export default class CharacterPage extends React.Component {
         window.gapi.load("auth2", async () => {
             const user = global.gapi.auth2.getAuthInstance().currentUser.get();
             this.setState({
-                user
+                user : user.Zi ? user : null
             });
             global.gapi.auth2.getAuthInstance().currentUser.listen(user => {
                 this.setState({
-                    user: user
+                    user : user.Zi ? user : null
                 });
             });
         });
