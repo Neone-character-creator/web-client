@@ -99,6 +99,8 @@ export default class CharacterPage extends React.Component {
                 case "export":
                     this.doExport(event.data.character);
                     break;
+                default:
+                    console.warn(`${this.actionCorrelations[event.data.correlationId]} not handled`);
             }
         });
         this.initiateSave = () => {
