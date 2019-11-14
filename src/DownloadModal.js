@@ -4,9 +4,6 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
 export default class DownloadModal extends React.Component {
-    constructor(props) {
-        super(props);
-    }
 
     render() {
         return (<Modal show={this.props.show}>
