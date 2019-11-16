@@ -17,7 +17,7 @@ export default class CharacterList extends React.Component {
             <Modal show={this.props.show} onHide={this.props.onEnd}>
                 <Modal.Dialog>
                     <Modal.Header closeButton>
-                        <Modal.Title>Select Character</Modal.Title>
+                        <Modal.Title>{this.props.title}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
                         {this.state.initializing && "Loading..."}
@@ -26,7 +26,7 @@ export default class CharacterList extends React.Component {
                             {
                                 this.props.characters.map(wrapper => {
                                     const loadThis = () => {
-                                        this.props.selectCharacter(wrapper.character).then(this.props.onEnd);
+                                        this.props.onSelect(wrapper.character).then(this.props.onEnd);
                                     };
                                     return (<li>
                                         <button class="btn btn-link" href="#" onClick={loadThis}>

@@ -31,6 +31,14 @@ export default class CharacterPage extends React.Component {
 
         this.beginLoginFlow = this.beginLoginFlow.bind(this);
         this.endLoginFlow = this.endLoginFlow.bind(this);
+        this.setUrlPathForCharacter = character => {
+            const {version, author, system} = this.props.match.params;
+            if (character && character.id) {
+                this.props.history.replace(`/plugins/${author}/${system}/${version}/character/${character.id}`);
+            } else {
+                this.props.history.push(`/plugins/${author}/${system}/${version}`);
+            }
+        };
         this.logout = () => {
             global.gapi.auth2.getAuthInstance().disconnect().then(() => {
                 this.setState({
@@ -59,6 +67,7 @@ export default class CharacterPage extends React.Component {
                         action: 'set-character',
                         character: JSON.stringify(postSaveCharacterData)
                     }, process.env.REACT_APP_PLUGIN_API_URL);
+                    this.setUrlPathForCharacter(postSaveCharacterData);
                     alert("Character saved")
                 }, error => {
                     alert("There was an error saving the character");
@@ -118,28 +127,16 @@ export default class CharacterPage extends React.Component {
             var proceed = window.confirm("This will lose any current unsaved data.");
             if (proceed) {
                 this.contentIframe.contentWindow.postMessage({
-
-                });
+                    action: 'set-character',
+                    character: JSON.stringify({})
+                }, process.env.REACT_APP_PLUGIN_API_URL);
             }
         };
 
         this.initiateLoad = () => {
-            const {version, author, system} = this.props.match.params;
             this.setState({
                     loadInProgress: true
-                }, () => {
-                    axios.get(process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters`, {
-                        headers: {
-                            authorization: `Bearer ${this.state.user.Zi.id_token}`
-                        }
-                    }).then(response => {
-                        this.setState({
-                            loadedCharacters: response.data
-                        })
-                    }, error => {
-                        alert("There was an error loading the characters from the server");
-                    })
-                }
+                }, this.loadCharacters
             );
         };
         this.selectCharacter = async character => {
@@ -147,6 +144,7 @@ export default class CharacterPage extends React.Component {
                 action: "set-character",
                 character: JSON.stringify(character)
             }, process.env.REACT_APP_PLUGIN_API_URL);
+            this.setUrlPathForCharacter(character);
         };
         this.endLoadFlow = async () => {
             this.setState({
@@ -206,6 +204,56 @@ export default class CharacterPage extends React.Component {
                 });
             }
         }
+
+        this.loadCharacters = () => {
+            const {version, author, system} = this.props.match.params;
+            axios.get(process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters`, {
+                headers: {
+                    authorization: `Bearer ${this.state.user.Zi.id_token}`
+                }
+            }).then(response => {
+                this.setState({
+                    loadedCharacters: response.data
+                })
+            }, error => {
+                alert("There was an error loading the characters from the server");
+                console.error(error);
+            })
+        }
+
+        this.initiateDelete = () => {
+            this.setState({
+                deleteInProgress: true
+            }, this.loadCharacters)
+        }
+
+        this.endDeleteFlow = () => {
+            this.setState({
+                deleteInProgress: false
+            });
+        }
+
+        this.deleteCharacter = async character => {
+            const confirmDelete = window.confirm("Are you sure you wish to delete?");
+            if (confirmDelete) {
+                const {version, author, system} = this.props.match.params;
+                const endpointUrl = process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/${character.id}`;
+                return axios({
+                    method: 'DELETE',
+                    url: endpointUrl,
+                    withCredentials: true,
+                    headers: {
+                        Authorization: `Bearer ${this.state.user.Zi.id_token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    alert("Character deleted");
+                    this.loadCharacters();
+                }, error => {
+                    alert("There was an error deleting the character");
+                });
+            }
+        }
     }
 
     componentDidMount() {
@@ -232,8 +280,7 @@ export default class CharacterPage extends React.Component {
 
     componentWillUpdate(nextProps, nextState, nextContext) {
         const {version, author, system, characterId} = this.props.match.params;
-        if(_.isNull(nextState.user) && characterId) {
-            const {version, author, system} = this.props.match.params;
+        if (_.isNull(nextState.user) && characterId) {
             this.props.history.replace(`/plugins/${author}/${system}/${version}`);
         }
     }
@@ -245,13 +292,17 @@ export default class CharacterPage extends React.Component {
                 <LoginModal show={this.state.loginInProgress} onEnd={this.endLoginFlow} onComplete={this.endLoginFlow}/>
                 <CharacterList show={this.state.loadInProgress} characters={this.state.loadedCharacters}
                                onEnd={this.endLoadFlow}
-                               onSelect={this.selectCharacter} selectCharacter={this.selectCharacter}/>
+                               onSelect={this.selectCharacter} selectCharacter={this.selectCharacter}
+                               title="Select Character"/>
                 <ContactModal show={this.state.contactInProgress} onEnd={this.endContactFlow}
                               onComplete={this.endContactFlow}/>
                 <DownloadModal show={this.state.exportInProgress} onEnd={this.endExportFlow}
                                onComplete={this.endExportFlow}
-                               exportUrl={process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/pdf/${this.state.exportId}`}
-                />
+                               exportUrl={process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/pdf/${this.state.exportId}`}/>
+                <CharacterList show={this.state.deleteInProgress} characters={this.state.loadedCharacters}
+                               onEnd={this.endDeleteFlow}
+                               onSelect={this.deleteCharacter}
+                               title="Select Character to Delete"/>
                 <div className="container">
                     <nav id="navbar" className="navbar navbar-expand-md bg-light">
                         <ul className="navbar-nav">
@@ -265,7 +316,7 @@ export default class CharacterPage extends React.Component {
                                 <button className="btn btn-link" href={this.state.user ? "#" : undefined}
                                         id="save-character"
                                         onClick={this.initiateSave}
-                                        disabled={this.state.user === undefined}>
+                                        disabled={_.isNil(this.state.user)}>
                                     <span className="glyphicon glyphicon-floppy-save"/>
                                     Save Character
                                 </button>
@@ -273,7 +324,7 @@ export default class CharacterPage extends React.Component {
                             <li className="nav-item">
                                 <button className="btn btn-link" href={this.state.user ? "#" : undefined}
                                         id="open-character"
-                                        disabled={this.state.user === undefined}
+                                        disabled={_.isNil(this.state.user)}
                                         onClick={this.initiateLoad}>
                                     <span className="glyphicon glyphicon-floppy-open"/>
                                     Open Character
@@ -282,7 +333,8 @@ export default class CharacterPage extends React.Component {
                             <li className="nav-item">
                                 <button className="btn btn-link" href={this.state.user ? "#" : undefined}
                                         id="delete-character"
-                                        disabled={this.state.user === undefined}>
+                                        disabled={_.isNil(this.state.user)}
+                                        onClick={this.initiateDelete}>
                                     <span className="glyphicon glyphicon-floppy-remove"/>
                                     Delete Character
                                 </button>
@@ -290,7 +342,7 @@ export default class CharacterPage extends React.Component {
                             <li className="nav-item">
                                 <button className="btn btn-link" href={this.state.user ? "#" : undefined}
                                         id="export-character"
-                                        disabled={this.state.user === undefined}
+                                        disabled={_.isNil(this.state.user)}
                                         onClick={this.exportToPdf}>
                                     <span className="glyphicon glyphicon-download-alt"/>
                                     Export to PDF
