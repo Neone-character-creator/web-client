@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React from "react";
 import {Container} from "react-bootstrap";
 import LoginModal from "./LoginModal";
@@ -141,7 +142,7 @@ export default class CharacterPage extends React.Component {
                 }
             );
         };
-        this.loadCharacter = async character => {
+        this.selectCharacter = async character => {
             this.contentIframe.contentWindow.postMessage({
                 action: "set-character",
                 character: JSON.stringify(character)
@@ -183,21 +184,58 @@ export default class CharacterPage extends React.Component {
             this.setState({
                 exportInProgress: false
             });
+        };
+
+        this.loadCharacterIfAuthorized = () => {
+            if (this.state.user) {
+                const {version, author, system} = this.props.match.params;
+                axios({
+                    method: 'GET',
+                    url: process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/${this.props.match.params.characterId}`,
+                    withCredentials: true,
+                    headers: {
+                        Authorization: `Bearer ${this.state.user.Zi.id_token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    const character = response.data.character;
+                    this.selectCharacter(character);
+                }, error => {
+                    console.error(error);
+                    alert("Something went wrong loading the character");
+                });
+            }
         }
     }
 
     componentDidMount() {
         window.gapi.load("auth2", async () => {
+            const auth = await global.gapi.auth2.getAuthInstance();
             const user = global.gapi.auth2.getAuthInstance().currentUser.get();
             this.setState({
-                user : user.Zi ? user : null
+                user: user.Zi ? user : null
+            }, () => {
+                if (this.props.match.params.characterId) {
+                    this.loadCharacterIfAuthorized();
+                }
             });
             global.gapi.auth2.getAuthInstance().currentUser.listen(user => {
                 this.setState({
-                    user : user.Zi ? user : null
+                    user: user.Zi ? user : null
                 });
+                if (this.props.match.params.characterId) {
+                    this.loadCharacterIfAuthorized();
+                }
             });
         });
+    }
+
+    componentWillUpdate(nextProps, nextState, nextContext) {
+        const {version, author, system, characterId} = this.props.match.params;
+        if(_.isNull(nextState.user) && characterId) {
+            const {version, author, system} = this.props.match.params;
+            this.props.history.replace(`/plugins/${author}/${system}/${version}`);
+        }
     }
 
     render() {
@@ -207,11 +245,13 @@ export default class CharacterPage extends React.Component {
                 <LoginModal show={this.state.loginInProgress} onEnd={this.endLoginFlow} onComplete={this.endLoginFlow}/>
                 <CharacterList show={this.state.loadInProgress} characters={this.state.loadedCharacters}
                                onEnd={this.endLoadFlow}
-                               onSelect={this.loadCharacter} selectCharacter={this.loadCharacter}/>
+                               onSelect={this.selectCharacter} selectCharacter={this.selectCharacter}/>
                 <ContactModal show={this.state.contactInProgress} onEnd={this.endContactFlow}
                               onComplete={this.endContactFlow}/>
                 <DownloadModal show={this.state.exportInProgress} onEnd={this.endExportFlow}
-                               onComplete={this.endExportFlow} exportUrl={process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/pdf/${this.state.exportId}`} />
+                               onComplete={this.endExportFlow}
+                               exportUrl={process.env.REACT_APP_PLUGIN_API_URL + `/games/${author}/${system}/${version}/characters/pdf/${this.state.exportId}`}
+                />
                 <div className="container">
                     <nav id="navbar" className="navbar navbar-expand-md bg-light">
                         <ul className="navbar-nav">
