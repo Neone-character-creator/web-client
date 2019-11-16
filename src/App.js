@@ -24,6 +24,7 @@ export default class App extends React.Component {
             <Router>
                 <Switch>
                     <Route exact path="/" component={Plugins}/>
+                    <Route path="/plugins/:author/:system/:version/character/:characterId?" component={CharacterPage}/>
                     <Route path="/plugins/:author/:system/:version" component={CharacterPage}/>
                 </Switch>
             </Router>
