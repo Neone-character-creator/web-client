@@ -12,15 +12,17 @@ export default class LoginModal extends React.Component {
     }
 
     initializeGoogle(element) {
-        window.gapi.auth2.getAuthInstance().attachClickHandler(element, {}, (googleUser) => {
-            this.props.onComplete();
-        }, error => {
-            alert("Something went wrong when logging in. If problem persists, please try a private browser window.");
-            console.error(error);
-        });
-        this.setState({
-            googleInitialized: true
-        });
+        if (element) {
+            window.gapi.auth2.getAuthInstance().attachClickHandler(element, {}, (googleUser) => {
+                this.props.onComplete();
+            }, error => {
+                alert("Something went wrong when logging in. If problem persists, please try a private browser window.");
+                console.error(error);
+            });
+            this.setState({
+                googleInitialized: true
+            });
+        }
     }
 
     render() {
