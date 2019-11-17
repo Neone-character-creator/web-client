@@ -43,11 +43,12 @@ export default class Plugins extends React.Component {
                     <div className="col-md-6 scrollable">
                         <div className="row">
                             <div className="center-block">
-                                Welcome to the NEOne Character creator.
-
-                                Select a system below to get started:
-                                <div className="list-group" id="available-plugins">
-                                </div>
+                                Welcome to the NEOne Character creator v{process.env.REACT_APP_VERSION}.
+                            </div>
+                        </div>
+                        <div className="row">
+                            Select a system below to get started:
+                            <div className="list-group" id="available-plugins">
                             </div>
                         </div>
                         <div className="row">
@@ -68,9 +69,12 @@ export default class Plugins extends React.Component {
                          dangerouslySetInnerHTML={{__html: this.state.description}}>
                     </div>
                 </div>
-                <div className="row">
-                    {this.state.loading &&
-                        <img id="spinner" class="mx-auto" src={loadSpinner} alt="Plugins are loading"/>}
+                < div
+                    className="row">
+                    {
+                        this.state.loading &&
+                        <img id="spinner" class="mx-auto" src={loadSpinner} alt="Plugins are loading"/>
+                    }
                 </div>
             </div>
         );
