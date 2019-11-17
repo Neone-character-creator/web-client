@@ -31,7 +31,7 @@ export default class DownloadModal extends React.Component {
                             </button>
                         </Row>
                         {this.state.downloadInProgress && <Row>
-                            <img src={spinner}/>
+                            <img alt="Loading in progress" src={spinner}/>
                         </Row>}
                     </Container>
 

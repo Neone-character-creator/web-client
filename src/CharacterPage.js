@@ -246,11 +246,12 @@ export default class CharacterPage extends React.Component {
                         Authorization: `Bearer ${this.state.user.Zi.id_token}`,
                         'Content-Type': 'application/json'
                     }
-                }).then(response => {
+                }).then(() => {
                     alert("Character deleted");
                     this.loadCharacters();
                 }, error => {
                     alert("There was an error deleting the character");
+                    console.error(error);
                 });
             }
         }
@@ -258,7 +259,6 @@ export default class CharacterPage extends React.Component {
 
     componentDidMount() {
         window.gapi.load("auth2", async () => {
-            const auth = await global.gapi.auth2.getAuthInstance();
             const user = global.gapi.auth2.getAuthInstance().currentUser.get();
             this.setState({
                 user: user.Zi ? user : null
