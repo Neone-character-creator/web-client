@@ -261,7 +261,7 @@ export default class CharacterPage extends React.Component {
         window.gapi.load("auth2", async () => {
             const user = global.gapi.auth2.getAuthInstance().currentUser.get();
             this.setState({
-                user: user.Zi ? user : null
+                user: user.isSignedIn() ? user : null
             }, () => {
                 if (this.props.match.params.characterId) {
                     this.loadCharacterIfAuthorized();
@@ -269,7 +269,7 @@ export default class CharacterPage extends React.Component {
             });
             global.gapi.auth2.getAuthInstance().currentUser.listen(user => {
                 this.setState({
-                    user: user.Zi ? user : null
+                    user: user.Qt ? user : null
                 });
                 if (this.props.match.params.characterId) {
                     this.loadCharacterIfAuthorized();
