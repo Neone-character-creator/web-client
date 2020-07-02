@@ -63,10 +63,14 @@ workflows:
       - build:
           context: NEOne-Web-Production
           filters:
-            branches:
+            tags:
               only:
-                - master
+                - "\d+\.\d+\.\d+\.?.*"
       - S3_upload:
           context: NEOne-Web-Production
           requires:
             - build
+          filters:
+            tags:
+              only:
+                - "\d+\.\d+\.\d+\.?.*"
